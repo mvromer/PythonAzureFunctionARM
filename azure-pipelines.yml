@@ -14,15 +14,18 @@ trigger: none
 pool:
   vmimage: 'ubuntu-latest'
 
-steps:
-- task: AzurePowerShell@4
-  displayName: Deploy infrastructure
-  inputs:
-    azureSubscription: $(ArmConnectionName)
-    azurePowerShellVersion: LatestVersion
-    ScriptType: InlineScript
-    Inline: |
-      $(Build.Repository.LocalPath)\Deploy-FunctionAppInfrastructure.ps1 -ResourceGroupName $(ResourceGroupName) `
-          -StorageAccountName $(StorageAccountName) `
-          -AppInsightsName $(AppInsightsName) `
-          -FunctionAppName $(FunctionAppName)
+jobs:
+- job: DeployInfrastructure
+  displayName: Deploy Infrastructure
+  steps:
+  - task: AzurePowerShell@4
+    displayName: Deploy ARM template
+    inputs:
+      azureSubscription: $(ArmConnectionName)
+      azurePowerShellVersion: LatestVersion
+      ScriptType: InlineScript
+      Inline: |
+        $(Build.Repository.LocalPath)\Deploy-FunctionAppInfrastructure.ps1 -ResourceGroupName $(ResourceGroupName) `
+            -StorageAccountName $(StorageAccountName) `
+            -AppInsightsName $(AppInsightsName) `
+            -FunctionAppName $(FunctionAppName)
