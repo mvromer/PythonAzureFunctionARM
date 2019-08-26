@@ -2,12 +2,27 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
 
+    "parameters": {
+        "storageAccountName": {
+            "type": "string"
+        },
+
+        "appInsightsName": {
+            "type": "string"
+        },
+
+        "functionAppName": {
+            "type": "string"
+        }
+    },
+
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2018-07-01",
-            "name": "aptpyapp",
+            "name": "[parameters( 'storageAccountName' )]",
             "location": "[resourceGroup().location]",
+
             "kind": "StorageV2",
             "sku": {
                 "name": "Standard_LRS"
@@ -24,6 +39,66 @@
                 },
 
                 "supportsHttpsTrafficOnly": true
+            }
+        },
+
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2015-05-01",
+            "name": "[parameters( 'appInsightsName' )]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat( 'hidden-link:', resourceId( 'Microsoft.Web/site', parameters( 'functionAppName' ) ) )]": "Resource"
+            },
+
+            "kind": "web",
+
+            "properties": {
+                "Application_Type": "web",
+                "ApplicationId": "[parameters( 'functionAppName' )]"
+            }
+        },
+
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2016-08-01",
+            "name": "[parameters( 'functionAppName' )]",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp,linux",
+            "dependsOn": [
+                "[resourceId( 'Microsoft.Storage/storageAccounts', parameters( 'storageAccountName' ) )]",
+                "[resourceId( 'Microsoft.Insights/components', parameters( 'appInsightsName' ) )]"
+            ],
+
+            "properties": {
+                "reserved": true,
+
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat( 'DefaultEndpointsProtocol=https;AccountName=',
+                                parameters( 'storageAccountName' ),
+                                ';AccountKey=',
+                                listKeys( parameters( 'storageAccountName'), '2018-07-01' ).keys[0].value )]"
+                        },
+
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "python"
+                        },
+
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference( parameters( 'appInsightsName' ), '2015-05-01' ).InstrumentationKey]"
+                        }
+                    ]
+                }
             }
         }
     ]
