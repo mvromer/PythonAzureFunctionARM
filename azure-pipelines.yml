@@ -11,12 +11,12 @@
 
 trigger: none
 
-pool:
-  vmimage: 'ubuntu-latest'
-
 jobs:
 - job: DeployInfrastructure
   displayName: Deploy Infrastructure
+  pool:
+    vmimage: 'ubuntu-latest'
+
   steps:
   - task: AzurePowerShell@4
     displayName: Deploy ARM template
