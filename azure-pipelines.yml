@@ -1,0 +1,28 @@
+# When configuring this pipeline in Azure Pipelines, you must set up the following pipeline
+# variables using the web-based editor. This is so that these values can be selected at pipeline
+# run time.
+#
+#   AppInsightsName - Name to use for the Application Insights instance provisioned.
+#   ArmConnectionName - Name of the ARM service connection used to deploy the infrastructure.
+#   FunctionAppName - Name to use for the provisioned function app.
+#   ResourceGroupName - Name of the resource group to deploy the function app infrastructure into.
+#   StorageAccountName - Name to use for the storage account provisioned for the function app.
+#
+
+trigger: none
+
+pool:
+  vmimage: 'ubuntu-latest'
+
+steps:
+- task: AzurePowerShell@4
+  displayName: Deploy infrastructure
+  inputs:
+    azureSubscription: $(ArmConnectionName)
+    azurePowerShellVersion: LatestVersion
+    ScriptType: InlineScript
+    Inline: |
+      $(Build.Repository.LocalPath)\Deploy-FunctionAppInfrastructure.ps1 -ResourceGroupName $(ResourceGroupName) `
+          -StorageAccountName $(StorageAccountName) `
+          -AppInsightsName $(AppInsightsName) `
+          -FunctionAppName $(FunctionAppName)
